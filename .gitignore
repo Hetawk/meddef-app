@@ -100,3 +100,6 @@ dist/
 
 # Test images (uncomment if you want to exclude large test datasets)
 # assets/test_images/
+
+# Documentation and research figures (keep local only)
+doc/
