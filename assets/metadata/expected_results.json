@@ -1,0 +1,96 @@
+{
+    "roct": {
+        "clean_accuracy_target": 0.9752,
+        "attack_robustness": {
+            "fgsm_eps_0.01": {
+                "asr_threshold": 0.10,
+                "accuracy_threshold": 0.90
+            },
+            "fgsm_eps_0.05": {
+                "asr_threshold": 0.67,
+                "accuracy_threshold": 0.70
+            },
+            "fgsm_eps_0.10": {
+                "asr_threshold": 0.80,
+                "accuracy_threshold": 0.50
+            },
+            "pgd_eps_0.01": {
+                "asr_threshold": 0.05,
+                "accuracy_threshold": 0.95
+            },
+            "pgd_eps_0.05": {
+                "asr_threshold": 0.30,
+                "accuracy_threshold": 0.75
+            },
+            "pgd_eps_0.10": {
+                "asr_threshold": 0.60,
+                "accuracy_threshold": 0.55
+            },
+            "bim_eps_0.05": {
+                "asr_threshold": 0.45,
+                "accuracy_threshold": 0.65
+            },
+            "jsma_threshold_0.1": {
+                "asr_threshold": 0.25,
+                "accuracy_threshold": 0.80
+            }
+        },
+        "performance_metrics": {
+            "model_parameters": "21.84M",
+            "inference_time_target": "<100ms",
+            "memory_usage_target": "<500MB",
+            "daam_components": [
+                "AFD",
+                "MFE",
+                "MSF"
+            ]
+        }
+    },
+    "chest_xray": {
+        "clean_accuracy_target": 0.9752,
+        "attack_robustness": {
+            "fgsm_eps_0.01": {
+                "asr_threshold": 0.10,
+                "accuracy_threshold": 0.90
+            },
+            "fgsm_eps_0.05": {
+                "asr_threshold": 0.67,
+                "accuracy_threshold": 0.70
+            },
+            "fgsm_eps_0.10": {
+                "asr_threshold": 0.80,
+                "accuracy_threshold": 0.50
+            },
+            "pgd_eps_0.01": {
+                "asr_threshold": 0.05,
+                "accuracy_threshold": 0.95
+            },
+            "pgd_eps_0.05": {
+                "asr_threshold": 0.30,
+                "accuracy_threshold": 0.75
+            },
+            "pgd_eps_0.10": {
+                "asr_threshold": 0.60,
+                "accuracy_threshold": 0.55
+            },
+            "bim_eps_0.05": {
+                "asr_threshold": 0.45,
+                "accuracy_threshold": 0.65
+            },
+            "jsma_threshold_0.1": {
+                "asr_threshold": 0.25,
+                "accuracy_threshold": 0.80
+            }
+        },
+        "performance_metrics": {
+            "model_parameters": "21.84M",
+            "inference_time_target": "<100ms",
+            "memory_usage_target": "<500MB",
+            "daam_components": [
+                "AFD",
+                "MFE",
+                "MSF"
+            ]
+        }
+    }
+}

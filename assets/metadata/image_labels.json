@@ -1,0 +1,110 @@
+{
+    "roct": {
+        "clean": {
+            "cnv_001.png": {
+                "label": "CNV",
+                "confidence_target": ">95%"
+            },
+            "cnv_002.png": {
+                "label": "CNV",
+                "confidence_target": ">95%"
+            },
+            "dme_001.png": {
+                "label": "DME",
+                "confidence_target": ">95%"
+            },
+            "dme_002.png": {
+                "label": "DME",
+                "confidence_target": ">95%"
+            },
+            "drusen_001.png": {
+                "label": "Drusen",
+                "confidence_target": ">95%"
+            },
+            "drusen_002.png": {
+                "label": "Drusen",
+                "confidence_target": ">95%"
+            },
+            "normal_001.png": {
+                "label": "Normal",
+                "confidence_target": ">95%"
+            },
+            "normal_002.png": {
+                "label": "Normal",
+                "confidence_target": ">95%"
+            }
+        },
+        "attacks": {
+            "fgsm_eps_0.01": {
+                "cnv_001_fgsm.png": {
+                    "original_label": "CNV",
+                    "attack_success_threshold": "<90%"
+                },
+                "dme_001_fgsm.png": {
+                    "original_label": "DME",
+                    "attack_success_threshold": "<90%"
+                }
+            },
+            "fgsm_eps_0.05": {
+                "cnv_001_fgsm.png": {
+                    "original_label": "CNV",
+                    "attack_success_threshold": "<67%"
+                },
+                "dme_001_fgsm.png": {
+                    "original_label": "DME",
+                    "attack_success_threshold": "<67%"
+                },
+                "drusen_001_fgsm.png": {
+                    "original_label": "Drusen",
+                    "attack_success_threshold": "<67%"
+                },
+                "normal_001_fgsm.png": {
+                    "original_label": "Normal",
+                    "attack_success_threshold": "<67%"
+                }
+            },
+            "pgd_eps_0.05": {
+                "cnv_001_pgd.png": {
+                    "original_label": "CNV",
+                    "attack_success_threshold": "<30%"
+                },
+                "dme_001_pgd.png": {
+                    "original_label": "DME",
+                    "attack_success_threshold": "<30%"
+                }
+            }
+        }
+    },
+    "chest_xray": {
+        "clean": {
+            "normal_001.png": {
+                "label": "Normal",
+                "confidence_target": ">95%"
+            },
+            "normal_002.png": {
+                "label": "Normal",
+                "confidence_target": ">95%"
+            },
+            "pneumonia_001.png": {
+                "label": "Pneumonia",
+                "confidence_target": ">95%"
+            },
+            "pneumonia_002.png": {
+                "label": "Pneumonia",
+                "confidence_target": ">95%"
+            }
+        },
+        "attacks": {
+            "fgsm_eps_0.05": {
+                "normal_001_fgsm.png": {
+                    "original_label": "Normal",
+                    "attack_success_threshold": "<67%"
+                },
+                "pneumonia_001_fgsm.png": {
+                    "original_label": "Pneumonia",
+                    "attack_success_threshold": "<67%"
+                }
+            }
+        }
+    }
+}
