@@ -26,6 +26,7 @@ import {
   MetricCard,
 } from "../components/common/MedDefUI";
 import AllModelsSelection from "../components/testing/AllModelsSelection";
+import { ModelLoadingProgress } from "../components/common/ModelLoadingProgress";
 
 export function TestingScreen({ navigation }: { navigation?: any }) {
   const [step, setStep] = useState<"model" | "image" | "testing">("model");
@@ -37,6 +38,8 @@ export function TestingScreen({ navigation }: { navigation?: any }) {
     unloadModel,
     runLiveTest,
     isLoading,
+    loadingProgress,
+    loadingMessage,
     error,
     modelLoaded,
     currentDataset,
@@ -120,7 +123,11 @@ export function TestingScreen({ navigation }: { navigation?: any }) {
         />
 
         {isLoading ? (
-          <LoadingCard message="Loading model..." />
+          <ModelLoadingProgress
+            progress={loadingProgress}
+            message={loadingMessage}
+            modelName={currentVariant?.name}
+          />
         ) : error ? (
           <ErrorCard error={error} onRetry={() => setStep("model")} />
         ) : (

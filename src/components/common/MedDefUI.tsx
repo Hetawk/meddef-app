@@ -224,9 +224,15 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
   return (
     <MedDefCard style={styles.metricCard}>
-      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={styles.metricLabel} numberOfLines={2} adjustsFontSizeToFit>
+        {label}
+      </Text>
       <View style={styles.metricValue}>
-        <Text style={[styles.metricNumber, { color }]}>
+        <Text
+          style={[styles.metricNumber, { color }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
           {value}
           {unit && <Text style={styles.metricUnit}>{unit}</Text>}
         </Text>
@@ -350,21 +356,30 @@ const styles = StyleSheet.create({
   metricCard: {
     alignItems: "center",
     minHeight: 80,
+    flex: 1, // Take equal space in flex container
+    marginHorizontal: 2, // Small margin between cards
     justifyContent: "center",
+    minWidth: 95, // Ensure minimum width
+    paddingHorizontal: 8, // Add horizontal padding
   },
   metricLabel: {
-    fontSize: 12,
+    fontSize: 11, // Slightly smaller to fit better
     color: meddefTheme.colors.text.secondary,
     textAlign: "center",
     marginBottom: 4,
+    flexWrap: "wrap", // Allow text to wrap
+    width: "100%", // Take full width
   },
   metricValue: {
     flexDirection: "row",
     alignItems: "baseline",
+    justifyContent: "center", // Center the value
+    flexWrap: "wrap", // Allow wrapping if needed
   },
   metricNumber: {
-    fontSize: 24,
+    fontSize: 22, // Slightly smaller to fit better
     fontWeight: "700",
+    textAlign: "center",
   },
   metricUnit: {
     fontSize: 14,

@@ -1,11 +1,27 @@
 /**
  * Live MedDef Model Testing Hook
  *
- * Real-time testing with actual TensorFlow models
+ * Real-timexport function useLiveModelTesting(): LiveModelManager {
+  // State management
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const [currentDataset, setCurrentDataset] = useState<DatasetType | null>(
+    null
+  );
+  const [currentVariant, setCurrentVariant] = useState<ModelVariant | null>(
+    null
+  );
+  const [availableVariants, setAvailableVariants] = useState<ModelVariant[]>(
+    []
+  ); actual TensorFlow models
  */
 
 import { useState, useCallback, useEffect } from "react";
 import { Alert } from "react-native";
+import * as tf from "@tensorflow/tfjs";
 import {
   DatasetType,
   TestAsset,
@@ -15,6 +31,27 @@ import {
 } from "../types/meddef";
 import { MODEL_CONFIGS } from "../config/modelStrategy";
 import { modelLoader } from "../core/RealMedDefModelLoader";
+
+/**
+ * Convert TensorFlow attention map to 2D array
+ */
+async function convertAttentionMapToArray(
+  attentionTensor: tf.Tensor2D
+): Promise<number[][]> {
+  const data = await attentionTensor.data();
+  const [height, width] = attentionTensor.shape;
+
+  const result: number[][] = [];
+  for (let y = 0; y < height; y++) {
+    const row: number[] = [];
+    for (let x = 0; x < width; x++) {
+      row.push(data[y * width + x]);
+    }
+    result.push(row);
+  }
+
+  return result;
+}
 
 interface LiveModelManager {
   // Model Loading
@@ -34,6 +71,8 @@ interface LiveModelManager {
 
   // State
   isLoading: boolean;
+  loadingProgress: number;
+  loadingMessage: string;
   error: string | null;
   modelLoaded: boolean;
   currentDataset: DatasetType | null;
@@ -51,8 +90,10 @@ interface LiveModelManager {
 }
 
 export function useLiveModelTesting(): LiveModelManager {
-  // State
+  // State management
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [modelLoaded, setModelLoaded] = useState(false);
   const [currentDataset, setCurrentDataset] = useState<DatasetType | null>(
@@ -94,6 +135,8 @@ export function useLiveModelTesting(): LiveModelManager {
     async (dataset: DatasetType, variantId?: string): Promise<void> => {
       setIsLoading(true);
       setError(null);
+      setLoadingProgress(0);
+      setLoadingMessage("Initializing...");
 
       try {
         const config = MODEL_CONFIGS[dataset];
@@ -113,13 +156,19 @@ export function useLiveModelTesting(): LiveModelManager {
 
         console.log(`🚀 Loading real model: ${variant.name} for ${dataset}...`);
 
+        // Progress callback
+        const onProgress = (progress: number, message: string) => {
+          setLoadingProgress(progress);
+          setLoadingMessage(message);
+        };
+
         // For now, we'll need to get the actual model URL
         // This is a placeholder - in real implementation, you'd download from CI2P server
         const modelUrl =
           variant.downloadUrl || `models/${dataset}/${variant.id}/model.json`;
 
-        // Load the actual TensorFlow model
-        await modelLoader.loadModel(modelUrl, variant, dataset);
+        // Load the actual TensorFlow model with progress tracking
+        await modelLoader.loadModel(modelUrl, variant, dataset, onProgress);
 
         setCurrentDataset(dataset);
         setCurrentVariant(variant);
@@ -216,20 +265,48 @@ export function useLiveModelTesting(): LiveModelManager {
 
         const processingTime = Date.now() - startTime;
 
-        // Create live result
+        // Create live result with safe attention map handling
+        let daamAttention;
+        if (prediction.attackDetection?.attention_map?.attention) {
+          try {
+            daamAttention = {
+              values: await convertAttentionMapToArray(
+                prediction.attackDetection.attention_map.attention
+              ),
+              width:
+                prediction.attackDetection.attention_map.attention.shape[1],
+              height:
+                prediction.attackDetection.attention_map.attention.shape[0],
+              scale: 1.0,
+            };
+          } catch (attentionError) {
+            console.warn("Failed to process attention map:", attentionError);
+            daamAttention = {
+              values: Array(32)
+                .fill(null)
+                .map(() => Array(32).fill(0.5)),
+              width: 32,
+              height: 32,
+              scale: 1.0,
+            };
+          }
+        } else {
+          daamAttention = {
+            values: Array(32)
+              .fill(null)
+              .map(() => Array(32).fill(0.5)),
+            width: 32,
+            height: 32,
+            scale: 1.0,
+          };
+        }
+
         const result: TestResult = {
           image_path: imageUri,
           predicted_label: prediction.prediction as MedicalLabel,
           confidence: prediction.confidence,
-          attack_detected: false, // TODO: Implement attack detection
-          daam_attention: {
-            values: Array(64)
-              .fill(null)
-              .map(() => Array(64).fill(0.5)), // Mock attention map
-            width: 64,
-            height: 64,
-            scale: 1.0,
-          },
+          attack_detected: prediction.attackDetection?.is_attack || false,
+          daam_attention: daamAttention,
           processing_time: prediction.processingTime,
           timestamp: new Date().toISOString(),
         };
@@ -244,6 +321,9 @@ export function useLiveModelTesting(): LiveModelManager {
           `   Attack: ${result.attack_detected ? "DETECTED" : "CLEAN"}`
         );
         console.log(`   Processing: ${result.processing_time}ms`);
+
+        // Small delay to prevent overwhelming the device
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
         return result;
       } catch (err) {
@@ -328,6 +408,8 @@ export function useLiveModelTesting(): LiveModelManager {
 
     // State
     isLoading,
+    loadingProgress,
+    loadingMessage,
     error,
     modelLoaded,
     currentDataset,

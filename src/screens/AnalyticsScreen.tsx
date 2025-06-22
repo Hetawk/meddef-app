@@ -45,24 +45,30 @@ export function AnalyticsScreen() {
 
       {/* Overall Stats */}
       <View style={styles.statsGrid}>
-        <MetricCard
-          label="Total Tests"
-          value={247}
-          unit="completed"
-          color={meddefTheme.colors.primary}
-        />
-        <MetricCard
-          label="Success Rate"
-          value={94}
-          unit="%"
-          color={meddefTheme.colors.success}
-        />
-        <MetricCard
-          label="Avg Confidence"
-          value={89}
-          unit="%"
-          color={meddefTheme.colors.warning}
-        />
+        <View style={styles.metricCardWrapper}>
+          <MetricCard
+            label="Total Tests"
+            value={247}
+            unit="completed"
+            color={meddefTheme.colors.primary}
+          />
+        </View>
+        <View style={styles.metricCardWrapper}>
+          <MetricCard
+            label="Success Rate"
+            value={94}
+            unit="%"
+            color={meddefTheme.colors.success}
+          />
+        </View>
+        <View style={styles.metricCardWrapper}>
+          <MetricCard
+            label="Avg Confidence"
+            value={89}
+            unit="%"
+            color={meddefTheme.colors.warning}
+          />
+        </View>
       </View>
 
       {/* Dataset Breakdown */}
@@ -299,12 +305,22 @@ const styles = StyleSheet.create({
 
   contentPadding: {
     padding: meddefTheme.spacing.md,
+    paddingBottom: meddefTheme.spacing.xl, // Extra bottom padding for better scrolling
   },
 
   statsGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: meddefTheme.spacing.lg,
+    flexWrap: "wrap", // Allow wrapping on smaller screens
+    gap: 8, // Modern gap property for consistent spacing
+  },
+
+  metricCardWrapper: {
+    flex: 1,
+    marginHorizontal: 2, // Reduced margin
+    minWidth: 95, // Slightly smaller minimum width
+    maxWidth: 150, // Maximum width to prevent cards from getting too wide
   },
 
   datasetStats: {
