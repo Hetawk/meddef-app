@@ -14,7 +14,7 @@ import {
   MedicalLabel,
 } from "../types/meddef";
 import { MODEL_CONFIGS } from "../config/modelStrategy";
-import { modelLoader, MedDefModelLoader } from "../core/MockModelLoader";
+import { modelLoader } from "../core/RealMedDefModelLoader";
 
 interface LiveModelManager {
   // Model Loading
@@ -113,8 +113,13 @@ export function useLiveModelTesting(): LiveModelManager {
 
         console.log(`🚀 Loading real model: ${variant.name} for ${dataset}...`);
 
+        // For now, we'll need to get the actual model URL
+        // This is a placeholder - in real implementation, you'd download from CI2P server
+        const modelUrl =
+          variant.downloadUrl || `models/${dataset}/${variant.id}/model.json`;
+
         // Load the actual TensorFlow model
-        await modelLoader.loadModel(dataset, variant);
+        await modelLoader.loadModel(modelUrl, variant, dataset);
 
         setCurrentDataset(dataset);
         setCurrentVariant(variant);
@@ -206,33 +211,26 @@ export function useLiveModelTesting(): LiveModelManager {
       const startTime = Date.now();
 
       try {
-        // Load image as mock tensor
-        const imageTensor = await MedDefModelLoader.loadImageFromUri(imageUri);
-
-        // Run prediction
-        const prediction = await modelLoader.predict(imageTensor);
-
-        // Run attack detection
-        const attackDetection = await modelLoader.detectAttack(imageTensor);
-
-        // Cleanup tensor
-        imageTensor.dispose();
+        // Run prediction using real TensorFlow model
+        const prediction = await modelLoader.predict(imageUri);
 
         const processingTime = Date.now() - startTime;
 
         // Create live result
         const result: TestResult = {
           image_path: imageUri,
-          predicted_label: prediction.predictedClass as MedicalLabel,
+          predicted_label: prediction.prediction as MedicalLabel,
           confidence: prediction.confidence,
-          attack_detected: attackDetection.isAttack,
+          attack_detected: false, // TODO: Implement attack detection
           daam_attention: {
-            values: attackDetection.attentionMap,
-            width: attackDetection.attentionMap[0]?.length || 64,
-            height: attackDetection.attentionMap.length || 64,
+            values: Array(64)
+              .fill(null)
+              .map(() => Array(64).fill(0.5)), // Mock attention map
+            width: 64,
+            height: 64,
             scale: 1.0,
           },
-          processing_time: processingTime,
+          processing_time: prediction.processingTime,
           timestamp: new Date().toISOString(),
         };
 
@@ -316,7 +314,7 @@ export function useLiveModelTesting(): LiveModelManager {
       accuracy: currentVariant.accuracy,
       defenseCapability: currentVariant.defenseCapability,
       isOptimized: currentVariant.isQuantized || currentVariant.isPruned,
-      memoryUsage: modelInfo?.memoryUsage,
+      memoryUsage: "N/A", // Real memory info would come from TensorFlow.js
     };
   }, [currentVariant]);
 

@@ -15,7 +15,7 @@ import {
 import { DatasetType } from "../types/meddef";
 import { meddefTheme } from "../config/theme";
 import { MODEL_CONFIGS } from "../config/modelStrategy";
-import { AllModelsSelection } from "../components/testing/AllModelsSelection";
+
 import { ImageSelector } from "../components/testing/ImageSelector";
 import { useLiveModelTesting } from "../hooks/useLiveModelTesting";
 import {
@@ -25,6 +25,7 @@ import {
   ErrorCard,
   MetricCard,
 } from "../components/common/MedDefUI";
+import AllModelsSelection from "../components/testing/AllModelsSelection";
 
 export function TestingScreen({ navigation }: { navigation?: any }) {
   const [step, setStep] = useState<"model" | "image" | "testing">("model");
