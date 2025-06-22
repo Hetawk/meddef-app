@@ -1,0 +1,20 @@
+declare module "@env" {
+  export const CI2P_SERVER_HOST: string;
+  export const CI2P_SERVER_PORT: string;
+  export const CI2P_SERVER_PROTOCOL: string;
+  export const CI2P_MODEL_BASE_PATH: string;
+  export const APP_NAME: string;
+  export const APP_VERSION: string;
+  export const APP_ENVIRONMENT: string;
+  export const LAB_NAME: string;
+  export const INSTITUTION: string;
+  export const INSTITUTION_SHORT: string;
+  export const MAX_DOWNLOAD_RETRIES: string;
+  export const DOWNLOAD_TIMEOUT_MS: string;
+  export const CACHE_EXPIRY_DAYS: string;
+  export const DEBUG_MODE: string;
+  export const ENABLE_MOCK_MODELS: string;
+  export const LOG_LEVEL: string;
+  export const REQUIRE_AUTH: string;
+  export const API_RATE_LIMIT: string;
+}

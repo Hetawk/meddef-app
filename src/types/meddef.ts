@@ -3,6 +3,10 @@
  *
  * Core types for the MedDef adversarial-resilient medical imaging system
  * with Defense-Aware Attention Mechanism (DAAM)
+ *
+ * CI2P Laboratory
+ * School of Information Science and Engineering
+ * University of Jinan
  */
 
 // Dataset types for medical imaging
@@ -47,6 +51,27 @@ export interface TestResult {
   daam_attention: AttentionMap;
   processing_time: number;
   timestamp: string;
+}
+
+// Enhanced test result with adversarial attack analysis
+export interface EnhancedTestResult extends TestResult {
+  attackResult?: {
+    adversarialImage: any; // tf.Tensor - avoid importing tf in types
+    originalPrediction: any;
+    adversarialPrediction: any;
+    perturbationMagnitude: number;
+    attackSuccess: boolean;
+    confidenceDropPct: number;
+    attentionMap?: AttentionMap;
+  };
+  originalConfidence?: number;
+  adversarialConfidence?: number;
+  robustnessScore?: number;
+  attackMetrics?: {
+    perturbationMagnitude: number;
+    attackSuccess: boolean;
+    confidenceDropPct: number;
+  };
 }
 
 // Batch testing results for performance analysis
@@ -122,6 +147,7 @@ export interface MedDefTheme {
     danger: string;
     background: string;
     surface: string;
+    border: string;
     text: {
       primary: string;
       secondary: string;
@@ -211,6 +237,24 @@ export interface UseMedDefTestingReturn {
   loadModel: (dataset: DatasetType) => Promise<void>;
   runTest: (asset: TestAsset) => Promise<TestResult>;
   runBatchTest: (assets: TestAsset[]) => Promise<BatchTestResult>;
+  runAdversarialTest: (
+    cleanAsset: TestAsset,
+    attackType: "fgsm" | "pgd" | "medical_attention",
+    attackConfig: any // AttackConfig - avoid circular imports
+  ) => Promise<EnhancedTestResult>;
+  runRobustnessEvaluation: (
+    cleanAsset: TestAsset,
+    attackConfigs: Array<{
+      type: "fgsm" | "pgd" | "medical_attention";
+      config: any;
+    }>
+  ) => Promise<{
+    asset: TestAsset;
+    results: EnhancedTestResult[];
+    overallRobustness: number;
+    weakestAttack: string;
+    strongestDefense: string;
+  }>;
   isLoading: boolean;
   error: string | null;
   currentDataset: DatasetType | null;
@@ -223,6 +267,19 @@ export interface UseAssetManagerReturn {
   getAttackAssets: (dataset: DatasetType, method?: AttackMethod) => TestAsset[];
   assets: TestAsset[];
   isLoading: boolean;
+}
+
+// Model management types
+export interface ModelVariant {
+  id: string;
+  name: string;
+  description: string;
+  size: string;
+  accuracy: number;
+  defenseCapability: string;
+  downloadUrl?: string;
+  isQuantized: boolean;
+  isPruned: boolean;
 }
 
 // Constants for attack levels (matching research parameters)

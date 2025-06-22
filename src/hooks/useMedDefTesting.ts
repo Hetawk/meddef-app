@@ -11,6 +11,7 @@ import "@tensorflow/tfjs-react-native";
 import {
   TestAsset,
   TestResult,
+  EnhancedTestResult,
   BatchTestResult,
   DatasetType,
   ModelConfig,
@@ -18,6 +19,12 @@ import {
   MODEL_CONFIGS,
   UseMedDefTestingReturn,
 } from "../types/meddef";
+import {
+  AttackFactory,
+  AttackConfig,
+  AttackResult,
+  DAAMExtractor,
+} from "../attacks/adversarialAttacks";
 
 export const useMedDefTesting = (): UseMedDefTestingReturn => {
   // State management
@@ -240,10 +247,304 @@ export const useMedDefTesting = (): UseMedDefTestingReturn => {
     [model, currentDataset, runTest]
   );
 
+  /**
+   * Run adversarial attack testing on clean images
+   * Tests model robustness against various attack methods
+   */
+  const runAdversarialTest = useCallback(
+    async (
+      cleanAsset: TestAsset,
+      attackType: "fgsm" | "pgd" | "medical_attention",
+      attackConfig: AttackConfig
+    ): Promise<EnhancedTestResult> => {
+      if (!model || !currentDataset) {
+        throw new Error("Model not loaded. Please load a model first.");
+      }
+
+      if (cleanAsset.type !== "clean") {
+        throw new Error(
+          "Adversarial testing requires clean (non-attacked) images"
+        );
+      }
+
+      const startTime = performance.now();
+
+      try {
+        console.log(
+          `🔥 Running adversarial attack test: ${attackType} on ${cleanAsset.path}`
+        );
+        console.log(
+          `   Attack config: ε=${attackConfig.epsilon}, iterations=${
+            attackConfig.iterations || 1
+          }`
+        );
+
+        // Step 1: Preprocess clean image
+        const cleanImage = await preprocessImage(
+          cleanAsset.path,
+          currentDataset
+        );
+
+        // Step 2: Get original prediction and attention map
+        const originalPrediction = model.predict(
+          cleanImage.expandDims(0)
+        ) as tf.Tensor;
+        const originalAttentionMap = await DAAMExtractor.extractAttentionMap(
+          model,
+          cleanImage
+        );
+
+        const config = MODEL_CONFIGS.find((c) => c.dataset === currentDataset)!;
+        const originalLabel =
+          config.labels[originalPrediction.argMax().dataSync()[0]];
+        const originalConfidence = Math.max(
+          ...Array.from(originalPrediction.dataSync())
+        );
+
+        // Step 3: Generate adversarial example
+        const attack = AttackFactory.createAttack(attackType, attackConfig);
+        const trueLabel = config.labels.indexOf(cleanAsset.true_label);
+
+        const attackResult = await attack.generateAdversarialExample(
+          model,
+          cleanImage,
+          trueLabel,
+          currentDataset,
+          attackType === "medical_attention" ? originalAttentionMap : undefined
+        );
+
+        // Step 4: Analyze adversarial result
+        const adversarialLabel =
+          config.labels[
+            attackResult.adversarialPrediction.argMax().dataSync()[0]
+          ];
+        const adversarialConfidence = Math.max(
+          ...Array.from(attackResult.adversarialPrediction.dataSync())
+        );
+
+        // Step 5: Extract adversarial attention map
+        const adversarialAttentionMap = await DAAMExtractor.extractAttentionMap(
+          model,
+          attackResult.adversarialImage
+        );
+
+        // Step 6: Calculate robustness metrics
+        const robustnessScore = calculateRobustnessScore(
+          originalConfidence,
+          adversarialConfidence,
+          attackResult.perturbationMagnitude,
+          attackConfig.epsilon
+        );
+
+        // Step 7: Enhanced attack detection using DAAM comparison
+        const attackDetected = detectAdversarialWithDAAM(
+          originalAttentionMap,
+          adversarialAttentionMap,
+          attackResult.perturbationMagnitude
+        );
+
+        const result: EnhancedTestResult = {
+          image_path: cleanAsset.path,
+          predicted_label: adversarialLabel as any,
+          confidence: adversarialConfidence,
+          attack_detected: attackDetected,
+          daam_attention: adversarialAttentionMap,
+          processing_time: performance.now() - startTime,
+          timestamp: new Date().toISOString(),
+          // Enhanced fields
+          attackResult,
+          originalConfidence,
+          adversarialConfidence,
+          robustnessScore,
+          attackMetrics: {
+            perturbationMagnitude: attackResult.perturbationMagnitude,
+            attackSuccess: attackResult.attackSuccess,
+            confidenceDropPct: attackResult.confidenceDropPct,
+          },
+        };
+
+        console.log(`✅ Adversarial test complete:`);
+        console.log(
+          `   Original: ${originalLabel} (${(originalConfidence * 100).toFixed(
+            1
+          )}%)`
+        );
+        console.log(
+          `   Adversarial: ${adversarialLabel} (${(
+            adversarialConfidence * 100
+          ).toFixed(1)}%)`
+        );
+        console.log(`   Attack success: ${attackResult.attackSuccess}`);
+        console.log(`   Attack detected: ${attackDetected}`);
+        console.log(`   Robustness score: ${robustnessScore.toFixed(3)}`);
+        console.log(
+          `   Perturbation magnitude: ${attackResult.perturbationMagnitude.toFixed(
+            6
+          )}`
+        );
+
+        // Clean up tensors
+        cleanImage.dispose();
+        originalPrediction.dispose();
+        attackResult.originalPrediction.dispose();
+        attackResult.adversarialPrediction.dispose();
+        attackResult.adversarialImage.dispose();
+
+        return result;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Adversarial test failed";
+        console.error("Adversarial test error:", errorMessage);
+        throw new Error(errorMessage);
+      }
+    },
+    [model, currentDataset]
+  );
+
+  /**
+   * Comprehensive robustness evaluation
+   * Tests multiple attack types and strengths
+   */
+  const runRobustnessEvaluation = useCallback(
+    async (
+      cleanAsset: TestAsset,
+      attackConfigs: Array<{
+        type: "fgsm" | "pgd" | "medical_attention";
+        config: AttackConfig;
+      }>
+    ): Promise<{
+      asset: TestAsset;
+      results: EnhancedTestResult[];
+      overallRobustness: number;
+      weakestAttack: string;
+      strongestDefense: string;
+    }> => {
+      console.log(
+        `🛡️ Running comprehensive robustness evaluation on ${cleanAsset.path}`
+      );
+
+      const results: EnhancedTestResult[] = [];
+      let totalRobustness = 0;
+      let weakestRobustness = 1.0;
+      let weakestAttack = "";
+      let strongestRobustness = 0.0;
+      let strongestDefense = "";
+
+      for (const { type, config } of attackConfigs) {
+        try {
+          const result = await runAdversarialTest(cleanAsset, type, config);
+          results.push(result);
+
+          const robustness = result.robustnessScore || 0;
+          totalRobustness += robustness;
+
+          if (robustness < weakestRobustness) {
+            weakestRobustness = robustness;
+            weakestAttack = `${type} (ε=${config.epsilon})`;
+          }
+
+          if (robustness > strongestRobustness) {
+            strongestRobustness = robustness;
+            strongestDefense = `${type} (ε=${config.epsilon})`;
+          }
+        } catch (err) {
+          console.error(`Failed to run ${type} attack:`, err);
+        }
+      }
+
+      const overallRobustness = totalRobustness / results.length;
+
+      console.log(`✅ Robustness evaluation complete:`);
+      console.log(`   Overall robustness: ${overallRobustness.toFixed(3)}`);
+      console.log(
+        `   Weakest against: ${weakestAttack} (${weakestRobustness.toFixed(3)})`
+      );
+      console.log(
+        `   Strongest against: ${strongestDefense} (${strongestRobustness.toFixed(
+          3
+        )})`
+      );
+
+      return {
+        asset: cleanAsset,
+        results,
+        overallRobustness,
+        weakestAttack,
+        strongestDefense,
+      };
+    },
+    [runAdversarialTest]
+  );
+
+  // Helper functions for robustness analysis
+  const calculateRobustnessScore = (
+    originalConfidence: number,
+    adversarialConfidence: number,
+    perturbationMagnitude: number,
+    epsilon: number
+  ): number => {
+    // Combine confidence preservation and perturbation efficiency
+    const confidencePreservation = adversarialConfidence / originalConfidence;
+    const perturbationEfficiency = 1 - perturbationMagnitude / epsilon;
+
+    // Medical robustness score: higher is better (more robust)
+    return Math.max(0, (confidencePreservation + perturbationEfficiency) / 2);
+  };
+
+  const detectAdversarialWithDAAM = (
+    originalAttention: AttentionMap,
+    adversarialAttention: AttentionMap,
+    perturbationMagnitude: number
+  ): boolean => {
+    // Compare attention maps for adversarial pattern detection
+    const attentionDifference = calculateAttentionDifference(
+      originalAttention,
+      adversarialAttention
+    );
+
+    // Thresholds based on medical imaging requirements
+    const ATTENTION_THRESHOLD = 0.3; // 30% attention change indicates potential attack
+    const PERTURBATION_THRESHOLD = 0.01; // Low perturbation threshold for medical images
+
+    return (
+      attentionDifference > ATTENTION_THRESHOLD ||
+      perturbationMagnitude > PERTURBATION_THRESHOLD
+    );
+  };
+
+  const calculateAttentionDifference = (
+    attention1: AttentionMap,
+    attention2: AttentionMap
+  ): number => {
+    // Calculate L2 difference between attention maps
+    if (
+      attention1.width !== attention2.width ||
+      attention1.height !== attention2.height
+    ) {
+      return 1.0; // Maximum difference if shapes don't match
+    }
+
+    let sumSquaredDifference = 0;
+    let totalElements = 0;
+
+    for (let y = 0; y < attention1.height; y++) {
+      for (let x = 0; x < attention1.width; x++) {
+        const val1 = attention1.values[y][x];
+        const val2 = attention2.values[y][x];
+        sumSquaredDifference += (val1 - val2) ** 2;
+        totalElements++;
+      }
+    }
+
+    return Math.sqrt(sumSquaredDifference / totalElements);
+  };
+
   return {
     loadModel,
     runTest,
     runBatchTest,
+    runAdversarialTest,
+    runRobustnessEvaluation,
     isLoading,
     error,
     currentDataset,

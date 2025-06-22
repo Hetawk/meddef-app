@@ -2,6 +2,10 @@
 
 A beautiful React Native application for testing the **MedDef (Medical Defense)** model - a novel adversarial-resilient medical imaging system with Defense-Aware Attention Mechanism (DAAM).
 
+**Developed by CI2P Laboratory**  
+School of Information Science and Engineering  
+University of Jinan
+
 ## 🏥 About MedDef
 
 MedDef represents a paradigm shift in medical AI security, integrating adversarial robustness directly into feature extraction through three synergistic components:
@@ -306,6 +310,10 @@ This is a focused testing application for the MedDef research project. The curre
 ## 📄 License
 
 This project is part of the MedDef research on adversarial-resilient medical imaging systems.
+
+**CI2P Laboratory**  
+School of Information Science and Engineering  
+University of Jinan
 
 ## 🎯 Success Criteria
 

@@ -1,26 +1,43 @@
 {
   "expo": {
-    "name": "meddef",
-    "slug": "meddef",
+    "name": "MedDef - CI2P Laboratory",
+    "slug": "meddef-adversarial-defense",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.meddef.adversarialdefense",
+      "buildNumber": "1.0.0",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "MedDef needs camera access to capture medical images for adversarial testing",
+        "NSPhotoLibraryUsageDescription": "MedDef needs photo library access to load medical imaging datasets"
+      }
     },
     "android": {
+      "package": "com.meddef.adversarialdefense",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

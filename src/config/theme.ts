@@ -2,8 +2,10 @@
  * MedDef: Medical Defense Model Testing - Theme Configuration
  *
  * Beautiful medical-grade design system for professional healthcare interface
+ * Cross-platform optimized for iOS, Android, and Web
  */
 
+import { Platform } from "react-native";
 import { MedDefTheme } from "../types/meddef";
 
 export const meddefTheme: MedDefTheme = {
@@ -14,6 +16,7 @@ export const meddefTheme: MedDefTheme = {
     danger: "#dc2626", // Critical red - important medical alerts
     background: "#f8fafc", // Clean white-blue background
     surface: "#ffffff", // Pure white cards and surfaces
+    border: "#e2e8f0", // Light gray border color
     text: {
       primary: "#1e293b", // Dark slate - primary text
       secondary: "#64748b", // Medium slate - secondary text
@@ -36,9 +39,21 @@ export const meddefTheme: MedDefTheme = {
   },
 
   typography: {
-    heading: "SF Pro Display, system-ui, -apple-system, sans-serif",
-    body: "SF Pro Text, system-ui, -apple-system, sans-serif",
-    mono: "SF Mono, Consolas, Monaco, monospace",
+    heading: Platform.select({
+      ios: "SF Pro Display, system-ui, -apple-system, sans-serif",
+      android: "Roboto, system-ui, sans-serif",
+      default: "system-ui, -apple-system, sans-serif",
+    }),
+    body: Platform.select({
+      ios: "SF Pro Text, system-ui, -apple-system, sans-serif",
+      android: "Roboto, system-ui, sans-serif",
+      default: "system-ui, -apple-system, sans-serif",
+    }),
+    mono: Platform.select({
+      ios: "SF Mono, Consolas, Monaco, monospace",
+      android: "Roboto Mono, monospace",
+      default: "Consolas, Monaco, monospace",
+    }),
   },
 };
 
@@ -71,31 +86,67 @@ export const medicalColors = {
     fair: "#d97706", // 80-90% accuracy
     poor: "#dc2626", // <80% accuracy
   },
+
+  // Common medical UI colors
+  success: "#16a34a",
+  error: "#dc2626",
+  warning: "#d97706",
+  info: "#3b82f6",
 };
 
-// Shadow configurations for depth
+// Cross-platform shadow configurations
 export const shadows = {
-  small: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  medium: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  large: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 5,
-  },
+  small: Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+    },
+    android: {
+      elevation: 2,
+    },
+    default: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+    },
+  }),
+  medium: Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+    },
+    android: {
+      elevation: 4,
+    },
+    default: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+    },
+  }),
+  large: Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+    },
+    android: {
+      elevation: 8,
+    },
+    default: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+    },
+  }),
 };
 
 // Animation configurations

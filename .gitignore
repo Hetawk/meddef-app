@@ -94,9 +94,13 @@ dist/
 .yarn-integrity
 
 # MedDef specific
-# Large model files (add when you have actual models)
-# models/*.pth
-# models/*.tflite
+# Large model files - DO NOT COMMIT TO GIT (GitHub doesn't support large files)
+models/
+*.pth
+*.tflite
+*.h5
+*.pb
+*.onnx
 
 # Test images (uncomment if you want to exclude large test datasets)
 # assets/test_images/
